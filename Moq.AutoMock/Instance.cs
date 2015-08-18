@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Moq.AutoMock
 {
@@ -53,16 +54,26 @@ namespace Moq.AutoMock
             Mock = value;
         }
 
-        public MockInstance(Type mockType, MockBehavior mockBehavior)
-            :this(CreateMockOf(mockType, mockBehavior))
+        public MockInstance(Type mockType, MockBehavior mockBehavior, object[] args = null)
+            :this(CreateMockOf(mockType, mockBehavior, args))
         {
         }
 
-        private static Mock CreateMockOf(Type type, MockBehavior mockBehavior)
+        private static Mock CreateMockOf(Type type, MockBehavior mockBehavior, object[] args = null)
         {
+            
             var mockType = typeof (Mock<>).MakeGenericType(type);
-            var mock = (Mock) Activator.CreateInstance(mockType, mockBehavior);
+            var mock = (Mock) Activator.CreateInstance(mockType, BuildArgs(mockBehavior, args));
             return mock;
+        }
+
+        private static object[] BuildArgs(MockBehavior mockBehavior, object[] args)
+        {
+            if (args == null)
+                return new[] {(object)mockBehavior};
+            var list = new List<object> {mockBehavior};
+            list.AddRange(args);
+            return list.ToArray();
         }
 
         public object Value

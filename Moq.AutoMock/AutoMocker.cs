@@ -72,7 +72,12 @@ namespace Moq.AutoMock
 
         private object[] CreateArguments<T>(BindingFlags bindingFlags) where T : class
         {
-            var ctor = constructorSelector.SelectFor(typeof(T), typeMap.Keys.ToArray(), bindingFlags);
+            return CreateArguments(bindingFlags, typeof (T));
+        }
+
+        private object[] CreateArguments(BindingFlags bindingFlags, Type type) 
+        {
+            var ctor = constructorSelector.SelectFor(type, typeMap.Keys.ToArray(), bindingFlags);
             var arguments = ctor.GetParameters().Select(x => GetObjectFor(x.ParameterType)).ToArray();
             return arguments;
         }
@@ -132,7 +137,9 @@ namespace Moq.AutoMock
                     instance.Add(typeMap[elmType]);
                 return typeMap[type] = instance;
             }
-            return (typeMap[type] = new MockInstance(type, mockBehavior));
+            var args = type.IsInterface ? null : CreateArguments(GetBindingFlags(true), type);
+            var mockInstance = new MockInstance(type, mockBehavior, args);
+            return (typeMap[type] = mockInstance);
         }
 
         /// <summary>
