@@ -64,6 +64,8 @@ namespace Moq.AutoMock
             
             var mockType = typeof (Mock<>).MakeGenericType(type);
             var mock = (Mock) Activator.CreateInstance(mockType, BuildArgs(mockBehavior, args));
+            if (args != null)//if mock created for a class then make it partial
+                mock.CallBase = true;
             return mock;
         }
 
