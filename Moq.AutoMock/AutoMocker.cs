@@ -15,6 +15,7 @@ namespace Moq.AutoMock
         private readonly Dictionary<Type, IInstance> typeMap = new Dictionary<Type, IInstance>();
         private readonly ConstructorSelector constructorSelector = new ConstructorSelector();
         private readonly MockBehavior mockBehavior;
+        public Func<Type, object> ServiceFactory { get; set; }
 
         public AutoMocker(MockBehavior mockBehavior)
         {
@@ -113,8 +114,20 @@ namespace Moq.AutoMock
 
         private object GetObjectFor(Type type)
         {
-            var instance = typeMap.ContainsKey(type) ? typeMap[type] : CreateMockObjectAndStore(type);
+            IInstance instance;
+            if (!typeMap.TryGetValue(type, out instance))
+            {
+                instance = CreateUsingServiceFactory(type) ?? CreateMockObjectAndStore(type);
+            }
             return instance.Value;
+        }
+
+        private IInstance CreateUsingServiceFactory(Type type)
+        {
+            var instance = ServiceFactory?.Invoke(type);
+            if (instance != null)
+                return new RealInstance(instance);
+            return null;
         }
 
         private Mock GetOrMakeMockFor(Type type)
