@@ -53,7 +53,7 @@ namespace Moq.AutoMock
         public T CreateInstance<T>(bool enablePrivate) where T : class
         {
             var bindingFlags = GetBindingFlags(enablePrivate);
-            var arguments = CreateArguments<T>(bindingFlags);
+            var arguments = CreateArguments(bindingFlags, typeof(T));
             try
             {
                 return (T)Activator.CreateInstance(typeof(T), bindingFlags, null, arguments, null);
@@ -108,9 +108,20 @@ namespace Moq.AutoMock
         /// <returns>An instance with virtual and abstract members mocked</returns>
         public T CreateSelfMock<T>(bool enablePrivate) where T : class
         {
-            var arguments = CreateArguments<T>(GetBindingFlags(enablePrivate));
+            var arguments = CreateArguments(GetBindingFlags(enablePrivate), typeof(T));
             return new Mock<T>(mockBehavior, arguments).Object;
         }
+
+        public Mock CreateSelfMock(bool enablePrivate, Type type)
+        {
+            var arguments = CreateArguments(GetBindingFlags(enablePrivate), type);
+            var d1 = typeof(Mock<>);
+            Type[] typeArgs = { type };
+            var mockType = d1.MakeGenericType(typeArgs);
+            var mock = (Mock)Activator.CreateInstance(mockType, arguments);
+            return mock;
+        }
+
 
         private object GetObjectFor(Type type)
         {
